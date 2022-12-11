@@ -11,6 +11,8 @@ import re
 import numpy as np
 import glob
 from matplotlib import pyplot as plt
+from openpyxl import load_workbook
+import pandas as pd
 
 
 def find_time_delta(logout_time, login_time):
@@ -32,6 +34,7 @@ def find_time_delta(logout_time, login_time):
 
     # this returns the time in minutes
     time_minutes = time_minutes[0] + (time_minutes[1]/60)
+    time_minutes = round(time_minutes, 2)
     return time_minutes
 
 # reading the raw file
@@ -70,6 +73,10 @@ for each_picker in pickers:
 
 time_logged_in_dic = pick_count_dic.copy()
 
+# removing unnecessary key
+if '-' in time_logged_in_dic.keys():
+    del time_logged_in_dic['-']
+
 # countin the number of picks done by every picker
 
 total_picks = 0
@@ -90,10 +97,6 @@ for station_key, _ in pick_time_dic.items():
         pick_time_dic[station_key]['login'] = {}
         pick_time_dic[station_key]['login'][each_picker] = []
         pick_time_dic[station_key]['logout'] = []
-
-# removing unnecessary key
-if '-' in pick_time_dic.keys():
-    del pick_time_dic['-']
 
 # =======
 
@@ -173,6 +176,7 @@ average_time_dictionary = {}
 print('Complete Pick Stats : ')
 print('\n')
 
+
 for k, v in time_logged_in_dic.items():
     try:
         print(k, 'stayed logged in for ', v, ' minutes and completed ',
@@ -181,6 +185,12 @@ for k, v in time_logged_in_dic.items():
         average_time_dictionary[k] = avg_pph
     except Exception as KeyError:
         continue
+
+# removing unnecessary key
+if '-' in pick_count_dic.keys():
+    del pick_count_dic['-']
+
+
 print('\n')
 print('Average time per picker : ')
 print(average_time_dictionary)
@@ -190,12 +200,37 @@ print('Total Picks done in this time frame : ', total_picks)
 print('\n')
 
 names = list(average_time_dictionary.keys())
-values = list(average_time_dictionary.values())
+list_avg_pph = list(average_time_dictionary.values())
 
-plt.bar(names, values)
+plt.bar(names, list_avg_pph)
 plt.grid()
 plt.title('Average picks by every associate')
 plt.xticks(rotation=90)
 plt.xlabel('Associate Login ID')
 plt.ylabel('Average PPH (login time adjusted)')
+
+# =======
+
+
+# ======= Lists prepared for excel writing
+
+list_operators = list(time_logged_in_dic.keys())
+list_picks = list(pick_count_dic.values())
+list_login_time = list(time_logged_in_dic.values())
+list_avg_pph = list(average_time_dictionary.values())
+
+print(len(list_operators), len(list_picks),
+      len(list_login_time), len(list_avg_pph))
+writer = pd.ExcelWriter('output.xlsx', engine='openpyxl')
+wb = writer.book
+df = pd.DataFrame({'Operator': list_operators,
+                   'Total Picks': list_picks,
+                   'Total Login Time': list_login_time,
+                   'Average PPH (adjusted for login time)': list_avg_pph})
+
+df.to_excel(writer, index=False)
+wb.save('output.xlsx')
+
+# =======
+
 plt.show()
