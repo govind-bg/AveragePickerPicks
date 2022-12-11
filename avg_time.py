@@ -40,7 +40,7 @@ def find_time_delta(logout_time, login_time):
 # reading the raw file
 
 
-RAW_FILE_NAME = "raw_data.csv"
+RAW_FILE_NAME = "raw_data_nov18.csv"
 data = read_csv(RAW_FILE_NAME)
 
 logs = data["message"].tolist()
@@ -139,18 +139,21 @@ for packout_station in packout_stations:
 
 for station_key_value, login_logout_status in pick_time_dic.copy().items():
     print('<------', station_key_value, ' ------>')
+
+    print('Logout Times : ')
+    print('\n')
     logout_times = login_logout_status["logout"]
+    print(logout_times)
 
     for login_logout_stat, timestamp_list in login_logout_status.copy().items():
-
         if login_logout_stat != "logout":
 
             for user, time_list in timestamp_list.copy().items():
                 print('\n')
                 print(user, ' ::: login times ::: ', time_list)
                 for login_time in time_list:
-                    logout_time = [
-                        i for i in logout_times if i > login_time][-1]
+                    logout_time = [i for i in logout_times if datetime.strptime(
+                        i, "%b %d, %Y @ %H:%M:%S.%f") > datetime.strptime(login_time, "%b %d, %Y @ %H:%M:%S.%f")][-1]
                     print('Login Time : ', login_time, ' | Logout Time : ', logout_time, " --- ",  find_time_delta(
                         logout_time, login_time), ' minutes')
                     try:
@@ -159,6 +162,7 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
                             logout_time, login_time)
                     except Exception as KeyError:
                         continue
+    print('<--------------------------------------------->')
     print('\n')
 
 # ======= Print out the stats and the dictionaries
