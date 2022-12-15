@@ -14,6 +14,8 @@ from matplotlib import pyplot as plt
 from openpyxl import load_workbook
 import pandas as pd
 
+# used to measure the total time the program was run for
+
 time_start = time.time()
 
 
@@ -40,18 +42,16 @@ def find_time_delta(logout_time, login_time):
     return time_minutes
 
 
-def process_dictionary(sample_dictionary):
-    # consolidating the code to reduce duplicate keys
-
-    pass
-
-
 # reading the raw file
 
 RAW_FILE_NAME = "csv_files/combined_csv.csv"
 data = read_csv(RAW_FILE_NAME)
 
+# convert all the messages to list
+
 logs = data["message"].tolist()
+
+# convert all the time stamps to list
 
 time_stamps = data["@timestamp"].tolist()
 
@@ -61,24 +61,33 @@ print('Sorting time to find the last data time / max_time .... ')
 time_stamps_copy = time_stamps.copy()
 time_stamps_copy.sort(key=lambda date: datetime.strptime(
     date, "%b %d, %Y @ %H:%M:%S.%f"))
-# time_stamps.sort(key=lambda date: datetime.strptime(
-#     date, "%b %d, %Y @ %H:%M:%S.%f"))
-time_max = time_stamps_copy[-1]
-print('Max time is : ', time_max)
 
+# time_max is the last time for which we have the data
+# reading from the copied list because we do not want to tamper with the
+# original data
+
+time_max = time_stamps_copy[-1]
+print('Data captured till : ', time_max)
+
+# converting system names to list and removing duplicate system names
 
 system_names = data["system_name"].tolist()
 
 # removing duplicate system names
+
 set_system_names = set(system_names)
 
-# removing duplicate operator ID names
+# converting operators to list and removing duplicate operator IDs
+
 pickers = set(data["operator_id"].tolist())
 
 # empty dictionary that keeps count of every picker and how many
 # picks they do
 
+# pick_count_dic : This dictionary keeps track of every pickers name and the number of picks they did.
+# A sample format would be {picker_a : x, picker_b : y, ..... }
 pick_count_dic = {}
+
 
 pick_time_dic = {}
 
@@ -89,67 +98,117 @@ pick_time_dic = {}
 # 'logout':[<list of logouts>]}
 # }
 
+# first we create a dictionary and assign 0 to each picker
 for each_picker in pickers:
 
     pick_count_dic[each_picker] = 0
 
+# creatinga copy of the picker dictionary
 time_logged_in_dic = pick_count_dic.copy()
 
-# removing unnecessary key
+# removing unnecessary keys
 if '-' in time_logged_in_dic.keys():
     del time_logged_in_dic['-']
 
-# countin the number of picks done by every picker
+# counting the number of picks done by every picker, can be used to validate with
+# bulk data from kibana if all the info processed is correct
 
+# basic counter that can be added to in every loop, adding upto the total counts
 total_picks = 0
 
-for msg in logs:
-    if msg[0:3] == "OB1":
-        try:
 
-            msg_split = msg.split('^')
-            # adding count of picks for every picker
-            pick_count_dic[str(msg_split[-1])] += int(msg_split[-2])
-            total_picks += int(msg_split[-2])
+for msg in logs:
+    # Logging data that counts for picks starts with OB1, and look like
+    # OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8519217^00900777770000551919^0037650058^02026^BG11985^SPS10^4^rfoksa006
+    # can extract the pick number from this
+
+    if msg[0:3] == "OB1":
+
+        try:
+                # splitting messages at ^
+                msg_split = msg.split('^')
+                # adding picker name and associated picker
+                pick_count_dic[str(msg_split[-1])] += int(msg_split[-2])
+                # adding to total picks
+                total_picks += int(msg_split[-2])
+
         except Exception as KeyError:
             print('Could not account for >>> ', str(msg_split[-1]))
             continue
+
+    # creating an empty dictionary of dictionaries where the design looks like
+    # {
+    #     system name{
+    #         'login':{
+    #             'user_name' : [<all_the_times_the_user_logged_into_this_very_station>]
+#         }
+#         'logout':{<all_the_times_someone_logged_out_of_this_cell>}
+#     }
+# }
 
 for each_station in set_system_names:
 
     pick_time_dic[each_station] = {}
 
 for station_key, _ in pick_time_dic.items():
+
     for each_picker in pickers:
+
+        # for every picker keep a record of when all they logged in
+        # sample login data looks like : {"message_type": "user_login", "user_id": "rfoksa039", "event_time": 1667940308.993677, "time": 1667940308.993671}
         pick_time_dic[station_key]['login'] = {}
         pick_time_dic[station_key]['login'][each_picker] = []
+
+        # and for all the times the system was logged out. Due to the way the logs are recorded
+        # we cannot see who logged out of a system, ONLY when the system was logged out
+        # sample log out data looks like : {"reason": "user", "message_type": "user_logout", "event_time": 1667940265.475309, "time": 1667940265.475286}
         pick_time_dic[station_key]['logout'] = []
 
-# =======
-
-count = 0
+# number of systems the data has been processed for. We go sequentially along the system_names
+system_read_count = 0
 
 for msg in logs:
 
+    # every login/logout message starts with '{'. So we are reading those only for now ... 
+
     if msg[0] == "{":
         msg_split = msg.split('"')
-        station_name = system_names[count]
+
+        # reading every system in the list
+        station_name = system_names[system_read_count]
+
+        # If its a login message
         if msg_split[3] == 'user_login':
+
+            # extracting user login name
             user_name = msg_split[7]
+
+            # if the user data was processed previously
+
             try:
+
                 pick_time_dic[station_name]['login'][user_name].append(
-                    time_stamps[count])
+                    time_stamps[system_read_count])
+            
+            # If the user data was not processed previosuly, i.e: we do not have
+            # a key in the dictionary with that users name
+
             except KeyError:
                 pick_time_dic[station_name]['login'][user_name] = []
                 pick_time_dic[station_name]['login'][user_name].append(
-                    time_stamps[count])
+                    time_stamps[system_read_count])
+
+        # If its a logout message
         else:
-            pick_time_dic[station_name]['logout'].append(time_stamps[count])
+            # adding logout data to the list
+            pick_time_dic[station_name]['logout'].append(time_stamps[system_read_count])
 
-    count += 1
+    # now we move on to the next system. i.e: sps01 followed by sps04 ,, etc ..... 
 
-# ======= Removing off packout stations since that does not account
-# for picks. OTT has 8 packout
+    system_read_count += 1
+
+# ======= Removing packout stations since that does not account
+# for any picks. OTT has 8 packout
 
 packout_stations = ['bcs1', 'bcs2', 'bcs3',
                     'bcs4', 'bcs5', 'bcs6', 'bcs7', 'bcs8']
@@ -166,42 +225,37 @@ for packout_station in packout_stations:
 
 
 for station_key_value, login_logout_status in pick_time_dic.copy().items():
-
+    print('=================================================','\n')
     print('Calculating for ', station_key_value, ' now .... ')
     # print('<-------------------------- ',
     #       station_key_value, ' -------------------------->')
 
-    # print('Logout Times : ')
-    # print('\n')
-
+    # all logout times are now converted to a list
     logout_times = login_logout_status["logout"]
+
+    # sort the logout times from earliest to latest
     logout_times.sort(key=lambda date: datetime.strptime(
         date, "%b %d, %Y @ %H:%M:%S.%f"))
 
-    # print(logout_times)
-    # print('\n')
 
     for login_logout_stat, timestamp_list in login_logout_status.copy().items():
+
+        # if the statu is logout
         if login_logout_stat != "logout":
+
+            # Calculating by adding the total time a user stayed logged in
 
             all_cell_login_times_list = []
             for user, user_specific_login_times in timestamp_list.copy().items():
                 all_cell_login_times_list += user_specific_login_times
 
-            # print('\n')
+            # sort all the times for which the user has logged in 
 
             all_cell_login_times_list.sort(
                 key=lambda date: datetime.strptime(date, "%b %d, %Y @ %H:%M:%S.%f"))
 
-            # print('==All Cell ', station_key_value,
-            #       ' has login times of :: ')
-            # print('\n')
-            # print(all_cell_login_times_list)
-            # print('\n')
 
             for user, user_specific_login_times in timestamp_list.copy().items():
-
-                # print(user, ' ::: login times ::: ', user_specific_login_times)
 
                 for login_time in user_specific_login_times:
 
@@ -211,8 +265,6 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
 
                         index_login = all_cell_login_times_list.index(
                             login_time)
-
-                        # print('Index of this login was ', index_login)
 
                         if index_login != len(all_cell_login_times_list)-1:
 
@@ -232,20 +284,10 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
 
                             # the logout time has to be smaller than the next biggest login time
 
-                            logout_time_sorted = [t for t in logout_times_copy if datetime.strptime(t, "%b %d, %Y @ %H:%M:%S.%f") > datetime.strptime(next_biggest_login_time, "%b %d, %Y @ %H:%M:%S.%f")]
+                            logout_time_sorted = [t for t in logout_times_copy if datetime.strptime(
+                                t, "%b %d, %Y @ %H:%M:%S.%f") > datetime.strptime(next_biggest_login_time, "%b %d, %Y @ %H:%M:%S.%f")]
                             logout_time_sorted.sort(
                                 key=lambda date: datetime.strptime(date, "%b %d, %Y @ %H:%M:%S.%f"))
-
-                            # print('\n')
-                            # print('After finding the earliest logout: ')
-                            # print(logout_time_sorted)
-                            # print('\n')
-                            
-                            # print('\n')
-                            # print('After adding the new login time to logouts : ')
-                            # print(logout_times_copy)
-                            # print('\n')
-                            # print(logout_time_sorted)
 
                             logout_time = logout_time_sorted[0]
 
@@ -253,6 +295,7 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
                             #     logout_time, login_time), ' minutes')
 
                         else:
+
                             # if the login time is the last one, then assume that to be the next
                             # biggest login time anyway and continue
                             # in this case the logout time is at the end of the day
@@ -264,6 +307,10 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
                             #     logout_time, login_time), ' minutes')
 
                     except Exception as IndexError:
+
+                        # since we are stopping our kibana query at a certain point, the user must have stayed logged in to 
+                        # continue picking, which means that we assume the log out time = max tim, which is basically the last time for which
+                        # we have a data
 
                         # print('The user ', user, ' kept picking till end of timerange,\
                         #     marking max time as logout time')
@@ -280,9 +327,8 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
                     except Exception as KeyError:
                         continue
 
-    print('<-------------------------- end of this station ',
-          station_key_value, ' -------------------------->')
-    print('\n')
+    print('Processing completed for .... ',station_key_value)
+    print('=================================================','\n','\n')
 
 # ======= Print out the stats and the dictionaries
 
@@ -295,6 +341,7 @@ print(pick_count_dic)
 print('\n')
 
 
+# Dictionary used to calculate the average time for every picker
 average_time_dictionary = {}
 
 print('Complete Pick Stats : ')
@@ -328,12 +375,12 @@ list_avg_pph = list(average_time_dictionary.values())
 
 # ======= Prepare bar raph
 
-plt.bar(names, list_avg_pph)
-plt.grid()
-plt.title('Average picks by every associate')
-plt.xticks(rotation=90)
-plt.xlabel('Associate Login ID')
-plt.ylabel('Average PPH (login time adjusted)')
+# plt.bar(names, list_avg_pph)
+# plt.grid()
+# plt.title('Average picks by every associate')
+# plt.xticks(rotation=90)
+# plt.xlabel('Associate Login ID')
+# plt.ylabel('Average PPH (login time adjusted)')
 
 # =======
 
@@ -361,8 +408,8 @@ wb.save('output/output.xlsx')
 
 # =======
 
-plt.savefig('output/output_graph.png')
-# plt.show()
-print('Full data processed from ', time_stamps_copy[0], ' to ', time_stamps_copy[-1])
+print('Full data processed from ',
+      time_stamps_copy[0], ' to ', time_stamps_copy[-1])
 
-print('Total time taken to process : ', time.time()-time_start)
+print('Total time taken to process : ', round(time.time()-time_start,2))
+print('Note : Please use EXCEL To calculate avg pph by dividing col2/(col3/60) to get pph instead of picks per minute')
