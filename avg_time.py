@@ -14,6 +14,8 @@ from matplotlib import pyplot as plt
 from openpyxl import load_workbook
 import pandas as pd
 
+time_start = time.time()
+
 
 def find_time_delta(logout_time, login_time):
     """
@@ -37,20 +39,40 @@ def find_time_delta(logout_time, login_time):
     time_minutes = round(time_minutes, 2)
     return time_minutes
 
+
+def process_dictionary(sample_dictionary):
+    # consolidating the code to reduce duplicate keys
+
+    pass
+
+
 # reading the raw file
 
-
-RAW_FILE_NAME = "raw_data_nov18.csv"
+RAW_FILE_NAME = "csv_files/combined_csv.csv"
 data = read_csv(RAW_FILE_NAME)
 
 logs = data["message"].tolist()
 
 time_stamps = data["@timestamp"].tolist()
 
+# To calculate if some are still logged in, we assume they logged out at the
+# end of the queried time range.
+print('Sorting time to find the last data time / max_time .... ')
+time_stamps_copy = time_stamps.copy()
+time_stamps_copy.sort(key=lambda date: datetime.strptime(
+    date, "%b %d, %Y @ %H:%M:%S.%f"))
+# time_stamps.sort(key=lambda date: datetime.strptime(
+#     date, "%b %d, %Y @ %H:%M:%S.%f"))
+time_max = time_stamps_copy[-1]
+print('Max time is : ', time_max)
+
+
 system_names = data["system_name"].tolist()
 
+# removing duplicate system names
 set_system_names = set(system_names)
 
+# removing duplicate operator ID names
 pickers = set(data["operator_id"].tolist())
 
 # empty dictionary that keeps count of every picker and how many
@@ -83,10 +105,15 @@ total_picks = 0
 
 for msg in logs:
     if msg[0:3] == "OB1":
-        msg_split = msg.split('^')
-        # adding count of picks for every picker
-        pick_count_dic[msg_split[-1]] += int(msg_split[-2])
-        total_picks += int(msg_split[-2])
+        try:
+
+            msg_split = msg.split('^')
+            # adding count of picks for every picker
+            pick_count_dic[str(msg_split[-1])] += int(msg_split[-2])
+            total_picks += int(msg_split[-2])
+        except Exception as KeyError:
+            print('Could not account for >>> ', str(msg_split[-1]))
+            continue
 
 for each_station in set_system_names:
 
@@ -121,7 +148,8 @@ for msg in logs:
 
     count += 1
 
-# ======= Removing off packout / no logouts occured
+# ======= Removing off packout stations since that does not account
+# for picks. OTT has 8 packout
 
 packout_stations = ['bcs1', 'bcs2', 'bcs3',
                     'bcs4', 'bcs5', 'bcs6', 'bcs7', 'bcs8']
@@ -138,31 +166,122 @@ for packout_station in packout_stations:
 
 
 for station_key_value, login_logout_status in pick_time_dic.copy().items():
-    print('<------', station_key_value, ' ------>')
 
-    print('Logout Times : ')
-    print('\n')
+    print('Calculating for ', station_key_value, ' now .... ')
+    # print('<-------------------------- ',
+    #       station_key_value, ' -------------------------->')
+
+    # print('Logout Times : ')
+    # print('\n')
+
     logout_times = login_logout_status["logout"]
-    print(logout_times)
+    logout_times.sort(key=lambda date: datetime.strptime(
+        date, "%b %d, %Y @ %H:%M:%S.%f"))
+
+    # print(logout_times)
+    # print('\n')
 
     for login_logout_stat, timestamp_list in login_logout_status.copy().items():
         if login_logout_stat != "logout":
 
-            for user, time_list in timestamp_list.copy().items():
-                print('\n')
-                print(user, ' ::: login times ::: ', time_list)
-                for login_time in time_list:
-                    logout_time = [i for i in logout_times if datetime.strptime(
-                        i, "%b %d, %Y @ %H:%M:%S.%f") > datetime.strptime(login_time, "%b %d, %Y @ %H:%M:%S.%f")][-1]
-                    print('Login Time : ', login_time, ' | Logout Time : ', logout_time, " --- ",  find_time_delta(
-                        logout_time, login_time), ' minutes')
+            all_cell_login_times_list = []
+            for user, user_specific_login_times in timestamp_list.copy().items():
+                all_cell_login_times_list += user_specific_login_times
+
+            # print('\n')
+
+            all_cell_login_times_list.sort(
+                key=lambda date: datetime.strptime(date, "%b %d, %Y @ %H:%M:%S.%f"))
+
+            # print('==All Cell ', station_key_value,
+            #       ' has login times of :: ')
+            # print('\n')
+            # print(all_cell_login_times_list)
+            # print('\n')
+
+            for user, user_specific_login_times in timestamp_list.copy().items():
+
+                # print(user, ' ::: login times ::: ', user_specific_login_times)
+
+                for login_time in user_specific_login_times:
+
+                    try:
+
+                        # check for the next biggest login time
+
+                        index_login = all_cell_login_times_list.index(
+                            login_time)
+
+                        # print('Index of this login was ', index_login)
+
+                        if index_login != len(all_cell_login_times_list)-1:
+
+                            # if the login time is not the biggets login time
+
+                            next_biggest_login_time = all_cell_login_times_list[index_login+1]
+
+                            # print('\n')
+                            # print('current login_time is : ', login_time)
+                            # print('next_biggest_login_time was found to be : ', next_biggest_login_time)
+                            # print('\n')
+
+                            logout_times_copy = logout_times.copy()
+                            logout_times_copy.append(next_biggest_login_time)
+                            logout_times_copy.sort(key=lambda date: datetime.strptime(
+                                date, "%b %d, %Y @ %H:%M:%S.%f"))
+
+                            # the logout time has to be smaller than the next biggest login time
+
+                            logout_time_sorted = [t for t in logout_times_copy if datetime.strptime(t, "%b %d, %Y @ %H:%M:%S.%f") > datetime.strptime(next_biggest_login_time, "%b %d, %Y @ %H:%M:%S.%f")]
+                            logout_time_sorted.sort(
+                                key=lambda date: datetime.strptime(date, "%b %d, %Y @ %H:%M:%S.%f"))
+
+                            # print('\n')
+                            # print('After finding the earliest logout: ')
+                            # print(logout_time_sorted)
+                            # print('\n')
+                            
+                            # print('\n')
+                            # print('After adding the new login time to logouts : ')
+                            # print(logout_times_copy)
+                            # print('\n')
+                            # print(logout_time_sorted)
+
+                            logout_time = logout_time_sorted[0]
+
+                            # print('         Login Time : ', login_time, ' | Logout Time : ', logout_time, " = ",  find_time_delta(
+                            #     logout_time, login_time), ' minutes')
+
+                        else:
+                            # if the login time is the last one, then assume that to be the next
+                            # biggest login time anyway and continue
+                            # in this case the logout time is at the end of the day
+
+                            next_biggest_login_time = login_time
+                            logout_time = time_max
+
+                            # print('         Login Time : ', login_time, ' | Logout Time : ', logout_time, " = ",  find_time_delta(
+                            #     logout_time, login_time), ' minutes')
+
+                    except Exception as IndexError:
+
+                        # print('The user ', user, ' kept picking till end of timerange,\
+                        #     marking max time as logout time')
+
+                        logout_time = time_max
+
+                        # print('Login Time : ', login_time, ' | Logout Time : ', logout_time, " = ",  find_time_delta(
+                        #     logout_time, login_time), ' minutes')
+
                     try:
                         # keep adding to the time the user logged in
                         time_logged_in_dic[user] += find_time_delta(
                             logout_time, login_time)
                     except Exception as KeyError:
                         continue
-    print('<--------------------------------------------->')
+
+    print('<-------------------------- end of this station ',
+          station_key_value, ' -------------------------->')
     print('\n')
 
 # ======= Print out the stats and the dictionaries
@@ -175,6 +294,7 @@ print('Dictionary for picks done : ')
 print(pick_count_dic)
 print('\n')
 
+
 average_time_dictionary = {}
 
 print('Complete Pick Stats : ')
@@ -183,10 +303,10 @@ print('\n')
 
 for k, v in time_logged_in_dic.items():
     try:
-        print(k, 'stayed logged in for ', v, ' minutes and completed ',
-              pick_count_dic[k], 'picks')
+        # print(k, 'stayed logged in for ', round(v, 2), ' minutes and completed ',
+        #       pick_count_dic[k], 'picks')
         avg_pph = pick_count_dic[k]/(v/60)
-        average_time_dictionary[k] = avg_pph
+        average_time_dictionary[k] = round(avg_pph, 2)
     except Exception as KeyError:
         continue
 
@@ -206,6 +326,8 @@ print('\n')
 names = list(average_time_dictionary.keys())
 list_avg_pph = list(average_time_dictionary.values())
 
+# ======= Prepare bar raph
+
 plt.bar(names, list_avg_pph)
 plt.grid()
 plt.title('Average picks by every associate')
@@ -223,18 +345,24 @@ list_picks = list(pick_count_dic.values())
 list_login_time = list(time_logged_in_dic.values())
 list_avg_pph = list(average_time_dictionary.values())
 
+
 print(len(list_operators), len(list_picks),
       len(list_login_time), len(list_avg_pph))
-writer = pd.ExcelWriter('output.xlsx', engine='openpyxl')
+
+writer = pd.ExcelWriter('output/output.xlsx', engine='openpyxl')
 wb = writer.book
 df = pd.DataFrame({'Operator': list_operators,
                    'Total Picks': list_picks,
-                   'Total Login Time': list_login_time,
-                   'Average PPH (adjusted for login time)': list_avg_pph})
+                   'Total Login Time (minutes)': list_login_time, })
+# 'Average PPH (adjusted for login time)': list_avg_pph})
 
 df.to_excel(writer, index=False)
-wb.save('output.xlsx')
+wb.save('output/output.xlsx')
 
 # =======
 
-plt.show()
+plt.savefig('output/output_graph.png')
+# plt.show()
+print('Full data processed from ', time_stamps_copy[0], ' to ', time_stamps_copy[-1])
+
+print('Total time taken to process : ', time.time()-time_start)
