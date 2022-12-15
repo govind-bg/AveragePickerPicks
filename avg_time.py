@@ -136,11 +136,13 @@ for msg in logs:
             print('Could not account for >>> ', str(msg_split[-1]))
             continue
 
-    # creating an empty dictionary of dictionaries where the design looks like
-    # {
-    #     system name{
-    #         'login':{
-    #             'user_name' : [<all_the_times_the_user_logged_into_this_very_station>]
+# dictionary format:
+
+# creating an empty dictionary of dictionaries where the design looks like
+# {
+#     system name{
+#         'login':{
+#             'user_name' : [<all_the_times_the_user_logged_into_this_very_station>]
 #         }
 #         'logout':{<all_the_times_someone_logged_out_of_this_cell>}
 #     }
