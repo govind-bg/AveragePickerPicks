@@ -1,0 +1,29 @@
+"@timestamp","system_name",message,"operator_id"
+"Nov 24, 2022 @ 08:31:08.051",sps06,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296668.051041, ""time"": 1669296668.05103}","-"
+"Nov 24, 2022 @ 08:30:50.851",sps05,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296650.851274, ""time"": 1669296650.851261}","-"
+"Nov 24, 2022 @ 08:30:02.505",sps04,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296602.505685, ""time"": 1669296602.505675}","-"
+"Nov 24, 2022 @ 08:29:46.372",sps03,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296586.372163, ""time"": 1669296586.372154}","-"
+"Nov 24, 2022 @ 08:29:43.702",sps07,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296583.702055, ""time"": 1669296583.702045}","-"
+"Nov 24, 2022 @ 08:29:16.080",sps08,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296556.080561, ""time"": 1669296556.080552}","-"
+"Nov 24, 2022 @ 08:28:49.115",sps09,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296529.115305, ""time"": 1669296529.115293}","-"
+"Nov 24, 2022 @ 08:28:31.820",sps02,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296511.820372, ""time"": 1669296511.820354}","-"
+"Nov 24, 2022 @ 08:28:06.781",sps10,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296486.781009, ""time"": 1669296486.781}","-"
+"Nov 24, 2022 @ 08:27:50.878",sps01,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669296470.878764, ""time"": 1669296470.878745}","-"
+"Nov 24, 2022 @ 08:19:28.585","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8657908CV^00900777770000139793^0037768306^02508^BG12485^SPS04^3^rfoghart",rfoghart
+"Nov 24, 2022 @ 08:07:08.063","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8686660^00900777770000617384^0037738424^00140^BG12136^SPS01^2^rfodmoor",rfodmoor
+"Nov 24, 2022 @ 08:07:01.909","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8686660^00900777770000617384^0037738424^00140^BG12136^SPS01^4^rfodmoor",rfodmoor
+"Nov 24, 2022 @ 08:06:03.186","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8686660^00900777770000617384^0037738424^00161^BG11258^SPS02^1^rfoswasey",rfoswasey
+"Nov 24, 2022 @ 08:05:50.210","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8657927^00600888880000482167^0004965698^02322^BG12487^SPS08^1^rf8076",rf8076
+"Nov 24, 2022 @ 08:04:36.256","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8686660^00900777770000617384^0037738424^00355^BG09462^SPS05^1^rfoswase",rfoswase
+"Nov 24, 2022 @ 08:03:46.763",sps09,"{""message_type"": ""user_login"", ""user_id"": ""rfoswasey"", ""event_time"": 1669295026.763816, ""time"": 1669295026.763811}","-"
+"Nov 24, 2022 @ 08:03:00.224",sps02,"{""message_type"": ""user_login"", ""user_id"": ""rfoswasey"", ""event_time"": 1669294980.224875, ""time"": 1669294980.224866}","-"
+"Nov 24, 2022 @ 08:02:57.184",sps01,"{""message_type"": ""user_login"", ""user_id"": ""rfodmoor"", ""event_time"": 1669294977.184517, ""time"": 1669294977.18451}","-"
+"Nov 24, 2022 @ 08:02:32.285",sps10,"{""message_type"": ""user_login"", ""user_id"": ""rfodmoor"", ""event_time"": 1669294952.285687, ""time"": 1669294952.285677}","-"
+"Nov 24, 2022 @ 08:02:27.486","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8686658^00600888880000401967^0038062238^00310^BG09349^SPS06^1^rfoswasey",rfoswasey
+"Nov 24, 2022 @ 08:01:26.627","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8658082^00600888880000419779^0037889532^00197^BG13259^SPS01^2^rfoghart",rfoghart
+"Nov 24, 2022 @ 08:01:22.651",sps01,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669294882.650897, ""time"": 1669294882.650868}","-"
+"Nov 24, 2022 @ 08:01:17.811","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8657927^00600888880000415046^0004965698^00894^BG11227^SPS01^2^rfoghart",rfoghart
+"Nov 24, 2022 @ 08:01:12.145","-","OB1-Interface: Queuing message to send to the WMS: PICKCOMPLETE:8657927^00600888880000415046^0004965698^02238^BG11808^SPS01^2^rfoghart",rfoghart
+"Nov 24, 2022 @ 08:00:34.004",sps09,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669294834.00405, ""time"": 1669294834.004041}","-"
+"Nov 24, 2022 @ 08:00:26.594",sps10,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669294826.594519, ""time"": 1669294826.594509}","-"
+"Nov 24, 2022 @ 08:00:05.319",sps02,"{""reason"": ""user"", ""message_type"": ""user_logout"", ""event_time"": 1669294805.319307, ""time"": 1669294805.319279}","-"
