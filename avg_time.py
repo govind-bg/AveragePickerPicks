@@ -125,12 +125,12 @@ for msg in logs:
     if msg[0:3] == "OB1":
 
         try:
-                # splitting messages at ^
-                msg_split = msg.split('^')
-                # adding picker name and associated picker
-                pick_count_dic[str(msg_split[-1])] += int(msg_split[-2])
-                # adding to total picks
-                total_picks += int(msg_split[-2])
+            # splitting messages at ^
+            msg_split = msg.split('^')
+            # adding picker name and associated picker
+            pick_count_dic[str(msg_split[-1])] += int(msg_split[-2])
+            # adding to total picks
+            total_picks += int(msg_split[-2])
 
         except Exception as KeyError:
             print('Could not account for >>> ', str(msg_split[-1]))
@@ -169,7 +169,7 @@ system_read_count = 0
 
 for msg in logs:
 
-    # every login/logout message starts with '{'. So we are reading those only for now ... 
+    # every login/logout message starts with '{'. So we are reading those only for now ...
 
     if msg[0] == "{":
         msg_split = msg.split('"')
@@ -189,7 +189,7 @@ for msg in logs:
 
                 pick_time_dic[station_name]['login'][user_name].append(
                     time_stamps[system_read_count])
-            
+
             # If the user data was not processed previosuly, i.e: we do not have
             # a key in the dictionary with that users name
 
@@ -201,9 +201,10 @@ for msg in logs:
         # If its a logout message
         else:
             # adding logout data to the list
-            pick_time_dic[station_name]['logout'].append(time_stamps[system_read_count])
+            pick_time_dic[station_name]['logout'].append(
+                time_stamps[system_read_count])
 
-    # now we move on to the next system. i.e: sps01 followed by sps04 ,, etc ..... 
+    # now we move on to the next system. i.e: sps01 followed by sps04 ,, etc .....
 
     system_read_count += 1
 
@@ -225,7 +226,7 @@ for packout_station in packout_stations:
 
 
 for station_key_value, login_logout_status in pick_time_dic.copy().items():
-    print('=================================================','\n')
+    print('=================================================', '\n')
     print('Calculating for ', station_key_value, ' now .... ')
     # print('<-------------------------- ',
     #       station_key_value, ' -------------------------->')
@@ -236,7 +237,6 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
     # sort the logout times from earliest to latest
     logout_times.sort(key=lambda date: datetime.strptime(
         date, "%b %d, %Y @ %H:%M:%S.%f"))
-
 
     for login_logout_stat, timestamp_list in login_logout_status.copy().items():
 
@@ -249,11 +249,10 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
             for user, user_specific_login_times in timestamp_list.copy().items():
                 all_cell_login_times_list += user_specific_login_times
 
-            # sort all the times for which the user has logged in 
+            # sort all the times for which the user has logged in
 
             all_cell_login_times_list.sort(
                 key=lambda date: datetime.strptime(date, "%b %d, %Y @ %H:%M:%S.%f"))
-
 
             for user, user_specific_login_times in timestamp_list.copy().items():
 
@@ -308,7 +307,7 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
 
                     except Exception as IndexError:
 
-                        # since we are stopping our kibana query at a certain point, the user must have stayed logged in to 
+                        # since we are stopping our kibana query at a certain point, the user must have stayed logged in to
                         # continue picking, which means that we assume the log out time = max tim, which is basically the last time for which
                         # we have a data
 
@@ -327,8 +326,8 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
                     except Exception as KeyError:
                         continue
 
-    print('Processing completed for .... ',station_key_value)
-    print('=================================================','\n','\n')
+    print('Processing completed for .... ', station_key_value)
+    print('=================================================', '\n', '\n')
 
 # ======= Print out the stats and the dictionaries
 
@@ -411,5 +410,5 @@ wb.save('output/output.xlsx')
 print('Full data processed from ',
       time_stamps_copy[0], ' to ', time_stamps_copy[-1])
 
-print('Total time taken to process : ', round(time.time()-time_start,2))
+print('Total time taken to process : ', round(time.time()-time_start, 2))
 print('Note : Please use EXCEL To calculate avg pph by dividing col2/(col3/60) to get pph instead of picks per minute')
