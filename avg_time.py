@@ -88,7 +88,7 @@ pickers = set(data["operator_id"].tolist())
 # A sample format would be {picker_a : x, picker_b : y, ..... }
 pick_count_dic = {}
 
-
+# Keeps track of the login and logout times of every picker
 pick_time_dic = {}
 
 # ======= preparing dictionary to look like:
@@ -226,7 +226,7 @@ for packout_station in packout_stations:
 
 
 for station_key_value, login_logout_status in pick_time_dic.copy().items():
-    print('=================================================', '\n')
+    print('=================================================')
     print('Calculating for ', station_key_value, ' now .... ')
     # print('<-------------------------- ',
     #       station_key_value, ' -------------------------->')
@@ -351,8 +351,19 @@ for k, v in time_logged_in_dic.items():
     try:
         # print(k, 'stayed logged in for ', round(v, 2), ' minutes and completed ',
         #       pick_count_dic[k], 'picks')
-        avg_pph = pick_count_dic[k]/(v/60)
-        average_time_dictionary[k] = round(avg_pph, 2)
+
+        # if the time logged in was 0, then assign the PPH as NaN
+        if v == 0:
+
+            # this is because the data logged has some gaps in it and can't see to get the data for when user X was logged and
+            # this causes the math to think that the user was logged in for 0 minutes and the calculation uses 0 in the
+            # denominator, which is impossible. Hence, its better to assign NaN to the value
+
+            average_time_dictionary[k] = 'NaN'
+        else:
+
+            avg_pph = pick_count_dic[k]/(v/60)
+            average_time_dictionary[k] = round(avg_pph, 2)
     except Exception as KeyError:
         continue
 
@@ -363,17 +374,18 @@ if '-' in pick_count_dic.keys():
 
 print('\n')
 print('Average time per picker : ')
+print('\n')
 print(average_time_dictionary)
 print('\n')
 
 print('Total Picks done in this time frame : ', total_picks)
 print('\n')
 
-names = list(average_time_dictionary.keys())
-list_avg_pph = list(average_time_dictionary.values())
 
 # ======= Prepare bar raph
 
+# names = list(average_time_dictionary.keys())
+# list_avg_pph = list(average_time_dictionary.values())
 # plt.bar(names, list_avg_pph)
 # plt.grid()
 # plt.title('Average picks by every associate')
@@ -391,16 +403,12 @@ list_picks = list(pick_count_dic.values())
 list_login_time = list(time_logged_in_dic.values())
 list_avg_pph = list(average_time_dictionary.values())
 
-
-print(len(list_operators), len(list_picks),
-      len(list_login_time), len(list_avg_pph))
-
 writer = pd.ExcelWriter('output/output.xlsx', engine='openpyxl')
 wb = writer.book
 df = pd.DataFrame({'Operator': list_operators,
                    'Total Picks': list_picks,
-                   'Total Login Time (minutes)': list_login_time, })
-# 'Average PPH (adjusted for login time)': list_avg_pph})
+                   'Total Login Time (minutes)': list_login_time,
+                   'Average PPH (adjusted for login time)': list_avg_pph})
 
 df.to_excel(writer, index=False)
 wb.save('output/output.xlsx')
@@ -409,6 +417,6 @@ wb.save('output/output.xlsx')
 
 print('Full data processed from ',
       time_stamps_copy[0], ' to ', time_stamps_copy[-1])
-
-print('Total time taken to process : ', round(time.time()-time_start, 2))
-print('Note : Please use EXCEL To calculate avg pph by dividing col2/(col3/60) to get pph instead of picks per minute')
+print('\n')
+print('Total time taken to process : ', round(
+    time.time()-time_start, 2), ' seconds.')
