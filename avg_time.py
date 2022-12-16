@@ -44,7 +44,7 @@ def find_time_delta(logout_time, login_time):
 
 # reading the raw file
 
-RAW_FILE_NAME = "csv_files/combined_csv.csv"
+RAW_FILE_NAME = "non_duplicate_csv.csv"
 data = read_csv(RAW_FILE_NAME)
 
 # convert all the messages to list
@@ -273,23 +273,20 @@ for station_key_value, login_logout_status in pick_time_dic.copy().items():
 
                             next_biggest_login_time = all_cell_login_times_list[index_login+1]
 
-                            # print('\n')
-                            # print('current login_time is : ', login_time)
-                            # print('next_biggest_login_time was found to be : ', next_biggest_login_time)
-                            # print('\n')
-
                             logout_times_copy = logout_times.copy()
                             logout_times_copy.append(next_biggest_login_time)
                             logout_times_copy.sort(key=lambda date: datetime.strptime(
                                 date, "%b %d, %Y @ %H:%M:%S.%f"))
 
-                            # the logout time has to be smaller than the next biggest login time
+                            # extracting all the times in the sorted logout list if the logout time (t) is
+                            # greater than the current login time
 
                             logout_time_sorted = [t for t in logout_times_copy if datetime.strptime(
-                                t, "%b %d, %Y @ %H:%M:%S.%f") > datetime.strptime(next_biggest_login_time, "%b %d, %Y @ %H:%M:%S.%f")]
+                                t, "%b %d, %Y @ %H:%M:%S.%f") > datetime.strptime(login_time, "%b %d, %Y @ %H:%M:%S.%f")]
                             logout_time_sorted.sort(
                                 key=lambda date: datetime.strptime(date, "%b %d, %Y @ %H:%M:%S.%f"))
 
+                            # the logout time then has to be the time in the new list which is greater than the curr_login_time and lesser than the next logout time 
                             logout_time = logout_time_sorted[0]
 
                             # print('         Login Time : ', login_time, ' | Logout Time : ', logout_time, " = ",  find_time_delta(
